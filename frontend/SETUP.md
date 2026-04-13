@@ -1,135 +1,144 @@
-# File Recovery Tool - Frontend Setup Guide
+# File Recovery Tool - Setup Guide
 
-## How the Frontend Connects to Your Backend
+## Architecture Overview
 
-Your Flask backend and this React frontend communicate through **HTTP API calls**. Here's how it works:
-
-### Architecture Overview
-
-```
-┌─────────────────┐      HTTP Requests      ┌──────────────────┐
-│                 │  ───────────────────────> │                  │
-│  React Frontend │                           │  Flask Backend   │
-│  (Port 5173)    │  <─────────────────────── │  (Port 5000)     │
-│                 │      JSON Responses       │                  │
-└─────────────────┘                           └──────────────────┘
-```
-
-### API Endpoints Used
-
-The frontend connects to these Flask endpoints:
-
-1. **GET /** - Check if backend is running
-2. **POST /recover** - Start file recovery
-   - Sends: `{ "drive": "C:" }`
-   - Receives: `{ "status": "success", "message": "..." }`
-3. **GET /files** - Get list of recovered files
-   - Receives: `{ "files": ["path/to/file1", "path/to/file2"] }`
-
-### Where the Connection Happens
-
-Check `src/services/api.ts` - this file handles all API communication:
-
-```typescript
-const API_BASE_URL = 'http://localhost:5000';  // Your Flask server
-
-// Example: Calling the /recover endpoint
-fetch(`${API_BASE_URL}/recover`, {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ drive: 'C:' })
-})
-```
+This application uses:
+- **Frontend**: React with TypeScript
+- **Backend**: Supabase Edge Functions (serverless)
+- **Database**: Supabase PostgreSQL
 
 ## Setup Instructions
 
-### Step 1: Start Your Flask Backend
-
-Navigate to your backend folder and run:
+### Step 1: Clone the Repository
 
 ```bash
-cd file-recovery-tool/backup
-python app.py
+git clone <your-repo-url>
+cd <your-repo-name>
 ```
 
-Your backend should start on `http://localhost:5000`
-
-### Step 2: Start the Frontend
-
-In this directory, run:
+### Step 2: Install Dependencies
 
 ```bash
-npm install    # Install dependencies (first time only)
-npm run dev    # Start development server
+npm install
 ```
 
-The frontend will open at `http://localhost:5173`
+### Step 3: Configure Supabase Credentials
 
-### Step 3: Using the Application
+1. Copy `.env.example` to `.env`:
+   ```bash
+   cp .env.example .env
+   ```
 
-1. Enter a drive path (e.g., `C:` for Windows or `/dev/sda1` for Linux)
-2. Click "Start Recovery"
-3. The frontend sends a POST request to `/recover`
-4. Wait for the recovery to complete
-5. View recovered files organized by category
+2. Get your Supabase credentials:
+   - Go to [Supabase Dashboard](https://app.supabase.com)
+   - Select your project
+   - Go to **Settings > API**
+   - Copy the **Project URL** and **Anon Key**
 
-## Understanding CORS
+3. Update `.env` with your credentials:
+   ```
+   VITE_SUPABASE_URL=https://your-project.supabase.co
+   VITE_SUPABASE_ANON_KEY=your-anon-key
+   ```
 
-Your Flask backend has this line:
-```python
-CORS(app)
+### Step 4: Start the Development Server
+
+```bash
+npm run dev
 ```
 
-This allows the frontend (running on port 5173) to make requests to the backend (running on port 5000). Without CORS, browsers would block these cross-origin requests.
+The application will open at `http://localhost:5173`
+
+## How the Application Works
+
+The frontend communicates with Supabase Edge Functions:
+
+```
+┌─────────────────────────────┐
+│   React Frontend            │
+│   (Your local machine)      │
+└──────────────┬──────────────┘
+               │ HTTPS Requests
+               ▼
+┌─────────────────────────────┐
+│   Supabase Edge Functions   │
+│   (Serverless backend)      │
+└──────────────┬──────────────┘
+               │
+               ▼
+┌─────────────────────────────┐
+│   Supabase Database         │
+│   (PostgreSQL)              │
+└─────────────────────────────┘
+```
+
+### API Endpoints
+
+1. **POST /functions/v1/file-recovery** - Start file recovery
+   - Sends: `{ "drive": "C:" }`
+   - Returns: `{ "status": "success", "message": "..." }`
+
+2. **GET /functions/v1/recovered-files** - Get list of recovered files
+   - Returns: `{ "files": ["file1", "file2", ...] }`
 
 ## Troubleshooting
 
 ### "Backend Disconnected" Message
 
-If you see this:
-- Make sure your Flask server is running (`python app.py`)
-- Check that it's running on port 5000
-- Try clicking "Retry Connection"
+If you see this message:
 
-### Recovery Not Starting
+1. **Check your `.env` file exists** and has the correct values:
+   ```bash
+   cat .env
+   ```
 
-- Ensure you've entered a valid drive path
-- Check the Flask console for error messages
-- Make sure PhotoRec is properly configured in `config.py`
+2. **Verify Supabase credentials** are correct:
+   - Go to your Supabase project dashboard
+   - Check **Settings > API** for the correct URL and key
 
-### Files Not Showing
+3. **Restart the dev server**:
+   ```bash
+   npm run dev
+   ```
 
-- Files appear after recovery completes
-- Click the refresh button or restart recovery
-- Check the `recovered_files` folder in your backend directory
+4. **Check browser console** for detailed error messages (F12 or Ctrl+Shift+I)
+
+### Build Issues
+
+```bash
+npm run build
+```
+
+If the build fails, check that all dependencies are installed:
+```bash
+npm install
+```
 
 ## Key Files
 
 - `src/App.tsx` - Main UI component
-- `src/services/api.ts` - API connection logic
+- `src/services/api.ts` - Supabase API client
 - `src/components/FilesList.tsx` - Displays recovered files
-
-## How to Modify
-
-### Change Backend URL
-
-If your Flask server runs on a different port, edit `src/services/api.ts`:
-
-```typescript
-const API_BASE_URL = 'http://localhost:YOUR_PORT';
-```
-
-### Add New API Endpoints
-
-1. Add endpoint to Flask backend
-2. Add corresponding function in `src/services/api.ts`
-3. Call it from your React components
+- `supabase/functions/` - Edge Function implementations
 
 ## Production Deployment
 
-For production, you'll need to:
+1. Build the frontend:
+   ```bash
+   npm run build
+   ```
 
-1. Build the frontend: `npm run build`
-2. Serve the `dist` folder with a web server
-3. Update `API_BASE_URL` to your production backend URL
-4. Configure your Flask backend for production (use Gunicorn, etc.)
+2. Deploy to a static hosting service:
+   - Vercel
+   - Netlify
+   - GitHub Pages
+   - AWS S3 + CloudFront
+
+3. Ensure your Supabase Edge Functions are deployed (they are automatically deployed when added to `supabase/functions/`)
+
+## Support
+
+For issues with:
+- **Supabase**: Visit [Supabase Docs](https://supabase.com/docs)
+- **React**: Visit [React Docs](https://react.dev)
+- **Vite**: Visit [Vite Docs](https://vitejs.dev)
