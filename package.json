@@ -1,0 +1,21 @@
+{
+<<<<<<< HEAD
+  "dependencies": {
+    "react-router-dom": "^7.14.1"
+=======
+  "name": "workspace",
+  "version": "0.0.0",
+  "license": "MIT",
+  "scripts": {
+    "preinstall": "node -e \"var fs=require('fs'); try{fs.unlinkSync('package-lock.json')}catch(e){} try{fs.unlinkSync('yarn.lock')}catch(e){} var agent=process.env.npm_config_user_agent||''; if(agent && !agent.startsWith('pnpm')){console.error('Use pnpm instead');process.exit(1);}\"",
+    "build": "pnpm run typecheck && pnpm -r --if-present run build",
+    "typecheck:libs": "tsc --build",
+    "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck"
+  },
+  "private": true,
+  "devDependencies": {
+    "typescript": "~5.9.2",
+    "prettier": "^3.8.1"
+>>>>>>> 8337c4b (Initial commit)
+  }
+}

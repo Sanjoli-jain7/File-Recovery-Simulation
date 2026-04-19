@@ -1,0 +1,639 @@
+openapi: 3.1.0
+info:
+  title: Api
+  version: 0.1.0
+  description: File System Recovery & Optimization Simulator API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: filesystem
+    description: File system operations
+  - name: crash
+    description: Crash and corruption simulation
+  - name: recovery
+    description: File recovery operations
+  - name: optimization
+    description: File system optimization
+  - name: stats
+    description: Statistics and dashboard data
+
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /filesystem:
+    get:
+      operationId: getFilesystem
+      tags: [filesystem]
+      summary: Get the full file system tree
+      responses:
+        "200":
+          description: Full file system state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FilesystemState"
+
+  /filesystem/reset:
+    post:
+      operationId: resetFilesystem
+      tags: [filesystem]
+      summary: Reset filesystem to initial state
+      responses:
+        "200":
+          description: Filesystem reset
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FilesystemState"
+
+  /filesystem/files:
+    post:
+      operationId: createFile
+      tags: [filesystem]
+      summary: Create a new file
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateFileBody"
+      responses:
+        "201":
+          description: File created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FileNode"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /filesystem/files/{id}:
+    delete:
+      operationId: deleteFile
+      tags: [filesystem]
+      summary: Delete a file
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: File deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FilesystemState"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /filesystem/access:
+    post:
+      operationId: accessFile
+      tags: [filesystem]
+      summary: Simulate file access (sequential or direct)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AccessFileBody"
+      responses:
+        "200":
+          description: Access result with timing metrics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccessResult"
+
+  /filesystem/blocks:
+    get:
+      operationId: getDiskBlocks
+      tags: [filesystem]
+      summary: Get disk block allocation state
+      responses:
+        "200":
+          description: Disk block state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DiskBlocksState"
+
+  /crash/simulate:
+    post:
+      operationId: simulateCrash
+      tags: [crash]
+      summary: Simulate a disk crash
+      responses:
+        "200":
+          description: Crash simulation result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CrashResult"
+
+  /crash/corrupt:
+    post:
+      operationId: corruptFile
+      tags: [crash]
+      summary: Corrupt a specific file
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CorruptFileBody"
+      responses:
+        "200":
+          description: Corruption result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FilesystemState"
+        "404":
+          description: File not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /recovery/recover:
+    post:
+      operationId: recoverFiles
+      tags: [recovery]
+      summary: Attempt to recover corrupted/deleted files
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RecoverBody"
+      responses:
+        "200":
+          description: Recovery result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecoveryResult"
+
+  /recovery/logs:
+    get:
+      operationId: getRecoveryLogs
+      tags: [recovery]
+      summary: Get recovery and journal logs
+      responses:
+        "200":
+          description: Recovery log entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LogEntry"
+
+  /optimization/defragment:
+    post:
+      operationId: defragmentDisk
+      tags: [optimization]
+      summary: Run defragmentation simulation
+      responses:
+        "200":
+          description: Defragmentation result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OptimizationResult"
+
+  /optimization/reallocate:
+    post:
+      operationId: reallocateBlocks
+      tags: [optimization]
+      summary: Reallocate disk blocks for efficiency
+      responses:
+        "200":
+          description: Reallocation result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OptimizationResult"
+
+  /stats/dashboard:
+    get:
+      operationId: getDashboardStats
+      tags: [stats]
+      summary: Get dashboard statistics
+      responses:
+        "200":
+          description: Dashboard stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardStats"
+
+  /stats/activity:
+    get:
+      operationId: getActivityLog
+      tags: [stats]
+      summary: Get OS activity log
+      responses:
+        "200":
+          description: Activity log entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActivityEntry"
+
+  /stats/performance:
+    get:
+      operationId: getPerformanceHistory
+      tags: [stats]
+      summary: Get performance comparison history
+      responses:
+        "200":
+          description: Performance history
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PerformanceHistory"
+
+  /stats/report:
+    get:
+      operationId: getSimulationReport
+      tags: [stats]
+      summary: Download simulation report as JSON
+      responses:
+        "200":
+          description: Full simulation report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SimulationReport"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required: [status]
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required: [error]
+
+    FileNode:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+          enum: [file, directory]
+        size:
+          type: integer
+        fileType:
+          type: string
+        createdAt:
+          type: string
+        parentId:
+          type: ["string", "null"]
+        blocks:
+          type: array
+          items:
+            type: integer
+        status:
+          type: string
+          enum: [healthy, corrupted, deleted, recovering]
+        children:
+          type: array
+          items:
+            $ref: "#/components/schemas/FileNode"
+      required: [id, name, type, size, fileType, createdAt, blocks, status]
+
+    FilesystemState:
+      type: object
+      properties:
+        root:
+          $ref: "#/components/schemas/FileNode"
+        totalBlocks:
+          type: integer
+        usedBlocks:
+          type: integer
+        freeBlocks:
+          type: integer
+        bitmap:
+          type: array
+          items:
+            type: integer
+        fragmentationScore:
+          type: number
+      required: [root, totalBlocks, usedBlocks, freeBlocks, bitmap, fragmentationScore]
+
+    DiskBlocksState:
+      type: object
+      properties:
+        totalBlocks:
+          type: integer
+        bitmap:
+          type: array
+          items:
+            type: integer
+        blockMap:
+          type: object
+          additionalProperties:
+            type: string
+        usedBlocks:
+          type: integer
+        freeBlocks:
+          type: integer
+        fragmentationScore:
+          type: number
+      required: [totalBlocks, bitmap, blockMap, usedBlocks, freeBlocks, fragmentationScore]
+
+    CreateFileBody:
+      type: object
+      properties:
+        name:
+          type: string
+        parentId:
+          type: ["string", "null"]
+        type:
+          type: string
+          enum: [file, directory]
+        fileType:
+          type: string
+        size:
+          type: integer
+      required: [name, type]
+
+    AccessFileBody:
+      type: object
+      properties:
+        fileId:
+          type: string
+        method:
+          type: string
+          enum: [sequential, direct]
+        operation:
+          type: string
+          enum: [read, write]
+      required: [fileId, method, operation]
+
+    AccessResult:
+      type: object
+      properties:
+        fileId:
+          type: string
+        method:
+          type: string
+        operation:
+          type: string
+        timeTakenMs:
+          type: number
+        blocksAccessed:
+          type: array
+          items:
+            type: integer
+        seekTime:
+          type: number
+        transferTime:
+          type: number
+        totalTime:
+          type: number
+      required: [fileId, method, operation, timeTakenMs, blocksAccessed, seekTime, transferTime, totalTime]
+
+    CrashResult:
+      type: object
+      properties:
+        affectedFiles:
+          type: integer
+        corruptedFiles:
+          type: array
+          items:
+            type: string
+        deletedFiles:
+          type: array
+          items:
+            type: string
+        message:
+          type: string
+        filesystem:
+          $ref: "#/components/schemas/FilesystemState"
+      required: [affectedFiles, corruptedFiles, deletedFiles, message, filesystem]
+
+    CorruptFileBody:
+      type: object
+      properties:
+        fileId:
+          type: string
+      required: [fileId]
+
+    RecoverBody:
+      type: object
+      properties:
+        method:
+          type: string
+          enum: [journal, backup]
+        targetIds:
+          type: array
+          items:
+            type: string
+      required: [method]
+
+    RecoveryResult:
+      type: object
+      properties:
+        method:
+          type: string
+        recovered:
+          type: array
+          items:
+            type: string
+        failed:
+          type: array
+          items:
+            type: string
+        partial:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+          enum: [success, partial, failed]
+        probabilityScore:
+          type: number
+        message:
+          type: string
+        filesystem:
+          $ref: "#/components/schemas/FilesystemState"
+      required: [method, recovered, failed, partial, status, probabilityScore, message, filesystem]
+
+    LogEntry:
+      type: object
+      properties:
+        id:
+          type: string
+        timestamp:
+          type: string
+        type:
+          type: string
+          enum: [journal, backup, crash, recovery, info]
+        message:
+          type: string
+        fileId:
+          type: ["string", "null"]
+        severity:
+          type: string
+          enum: [info, warn, error, success]
+      required: [id, timestamp, type, message, severity]
+
+    OptimizationResult:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [defragment, reallocate]
+        blocksMoved:
+          type: integer
+        fragmentationBefore:
+          type: number
+        fragmentationAfter:
+          type: number
+        accessTimeBefore:
+          type: number
+        accessTimeAfter:
+          type: number
+        improvementPercent:
+          type: number
+        message:
+          type: string
+        filesystem:
+          $ref: "#/components/schemas/FilesystemState"
+      required: [type, blocksMoved, fragmentationBefore, fragmentationAfter, accessTimeBefore, accessTimeAfter, improvementPercent, message, filesystem]
+
+    DashboardStats:
+      type: object
+      properties:
+        totalFiles:
+          type: integer
+        totalDirectories:
+          type: integer
+        healthyFiles:
+          type: integer
+        corruptedFiles:
+          type: integer
+        deletedFiles:
+          type: integer
+        totalBlocks:
+          type: integer
+        usedBlocks:
+          type: integer
+        freeBlocks:
+          type: integer
+        fragmentationScore:
+          type: number
+        diskUsagePercent:
+          type: number
+        recoveryCount:
+          type: integer
+        crashCount:
+          type: integer
+        optimizationCount:
+          type: integer
+        avgAccessTimeMs:
+          type: number
+      required: [totalFiles, totalDirectories, healthyFiles, corruptedFiles, deletedFiles, totalBlocks, usedBlocks, freeBlocks, fragmentationScore, diskUsagePercent, recoveryCount, crashCount, optimizationCount, avgAccessTimeMs]
+
+    ActivityEntry:
+      type: object
+      properties:
+        id:
+          type: string
+        timestamp:
+          type: string
+        action:
+          type: string
+        details:
+          type: string
+        category:
+          type: string
+          enum: [filesystem, crash, recovery, optimization, access]
+      required: [id, timestamp, action, details, category]
+
+    PerformanceHistory:
+      type: object
+      properties:
+        entries:
+          type: array
+          items:
+            $ref: "#/components/schemas/PerformanceEntry"
+        currentFragmentation:
+          type: number
+        currentAvgAccessTime:
+          type: number
+      required: [entries, currentFragmentation, currentAvgAccessTime]
+
+    PerformanceEntry:
+      type: object
+      properties:
+        label:
+          type: string
+        fragmentation:
+          type: number
+        avgAccessTime:
+          type: number
+        timestamp:
+          type: string
+      required: [label, fragmentation, avgAccessTime, timestamp]
+
+    SimulationReport:
+      type: object
+      properties:
+        generatedAt:
+          type: string
+        filesystem:
+          $ref: "#/components/schemas/FilesystemState"
+        stats:
+          $ref: "#/components/schemas/DashboardStats"
+        activityLog:
+          type: array
+          items:
+            $ref: "#/components/schemas/ActivityEntry"
+        recoveryLogs:
+          type: array
+          items:
+            $ref: "#/components/schemas/LogEntry"
+        performanceHistory:
+          $ref: "#/components/schemas/PerformanceHistory"
+      required: [generatedAt, filesystem, stats, activityLog, recoveryLogs, performanceHistory]

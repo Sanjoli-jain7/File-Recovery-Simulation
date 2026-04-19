@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "File System Recovery & Optimization Simulator"
+version = "1.0.0"
+id = "artifacts/fs-simulator"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 18950
+
+[services.development]
+run = "pnpm --filter @workspace/fs-simulator run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/fs-simulator", "run", "build" ]
+publicDir = "artifacts/fs-simulator/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "18950"
+BASE_PATH = "/"
