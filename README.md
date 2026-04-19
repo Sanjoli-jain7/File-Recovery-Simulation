@@ -81,4 +81,4 @@ npm run dev
 
 ## 👨‍💻 Author
 
-Saksham Chauhan
+Sanjoli Jain
